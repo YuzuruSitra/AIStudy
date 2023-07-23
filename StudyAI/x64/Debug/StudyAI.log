@@ -1,0 +1,5 @@
+﻿  learnstock.c
+E:\VisualStudio\StudyAI\StudyAI\learnstock.c(81,19): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
+E:\VisualStudio\StudyAI\StudyAI\learnstock.c(86,19): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
+E:\VisualStudio\StudyAI\StudyAI\learnstock.c(96,18): warning C4244: '=': 'double' から 'int' への変換です。データが失われる可能性があります。
+  StudyAI.vcxproj -> E:\VisualStudio\StudyAI\x64\Debug\StudyAI.exe
