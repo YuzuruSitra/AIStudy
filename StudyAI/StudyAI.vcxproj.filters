@@ -21,5 +21,11 @@
     <ClCompile Include="qlearning.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="aco.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="kpga.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
