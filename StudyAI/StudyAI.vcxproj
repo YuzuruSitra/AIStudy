@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="aco.c" />
     <ClCompile Include="kpga.c" />
+    <ClCompile Include="neuron.c" />
     <ClCompile Include="qlearning.c" />
     <ClCompile Include="sum2.c" />
   </ItemGroup>

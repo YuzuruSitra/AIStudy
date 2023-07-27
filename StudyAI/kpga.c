@@ -1,209 +1,326 @@
-/********************************************************/
-/*	 遺伝的アルゴリズム手法                             */
-/*   kpga.c                                             */
-/*   ナップサック問題のGAによるプログラム               */
-/*   GAによって、タップサック問題の最良解の探索します   */
-/*   使い方         　　　　　　　　　　　　            */
-/********************************************************/
-
-#define _CRT_SECURE_NO_WARNINGS
-
-/* ヘッダファイルのインクルード */
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-
-/* 記号定数の定義 */
-#define MAXVALUE 100					/* 重さと価値の最大値 */
-#define N 30							/* 荷物の個数 */
-#define WEIGHTLIMIT (N * MAXVALUE /4)	/* 重量制限 */
-#define POOLSIZE 30						/* プールサイズ */
-#define LASTG 50						/* 打ち切り世代 */
-#define MRATE 0.01						/* 突然変異の確立 */
-#define SEED 32767						/* 乱数のシード */
-#define YES 1							/* yesに対応する整数値 */
-#define NO 0							/* noに対応する整数値 */
-
-
-/* 関数のプロトタイプの宣言 */
-void initparcel();													/* 荷物の初期化 */
-int evalfit(int gene[]);											/* 適応度の計算 */
-void mating(int pool[POOLSIZE][N], int ngpool[POOLSIZE * 2][N]);	/* 交叉 */
-void mutation(int ngpool[POOLSIZE * 2][N]);							/* 突然変異 */
-void printp(int pool[POOLSIZE][N]);									/* 結果出力 */
-void initpool(int pool[POOLSIZE][N]);								/* 初期集団の生成 */
-int rndn();															/* n未満乱数の生成 */
-int notval(int v);													/* 真理値の反転 */
-int selectp(int roulette[POOLSIZE], int totalfitness);				/* 親の選択 */
-void crossing(int m[], int p[], int cl[], int c2[]);				/* 特定の2染色体の交叉 */
-void selectng(int ngpool[POOLSIZE * 2][N], int pool[POOLSIZE][N]);  /* 次世代の選択 */
-
-/* 大域変数(荷物データ) */
-int parcel[N][2];	/* 荷物 */
-
-/******************/
-/*   main()関数   */
-/******************/
-
-//int main()
-//{
-//	/* 各ステップのコスト()距離 */
-//	int cost[2][STEP] =
-//	{
-//		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-//		{5, 5, 5, 5, 5, 5, 5, 5, 5, 5}
-//	};
+///********************************************************/
+///*	 遺伝的アルゴリズム手法                           */
+///*   kpga.c                                             */
+///*   ナップサック問題のGAによるプログラム               */
+///*   GAによって、タップサック問題の最良解の探索します   */
+///*   使い方         　　　　　　　　　　　　            */
+///********************************************************/
 //
-//	double pheromone[2][STEP] = { 0 }; /* 各ステップのフェロモン量 */
-//	int mstep[NOA][STEP];  /* 蟻が歩いた過程 */
-//	int i; /* 繰り返し回数の制限 */
+//#define _CRT_SECURE_NO_WARNINGS
+//
+///* ヘッダファイルのインクルード */
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <limits.h>
+//
+///* 記号定数の定義 */
+//#define MAXVALUE 100					/* 重さと価値の最大値 */
+//#define N 30							/* 荷物の個数 */
+//#define WEIGHTLIMIT (N * MAXVALUE /4)	/* 重量制限 */
+//#define POOLSIZE 30						/* プールサイズ */
+//#define LASTG 50						/* 打ち切り世代 */
+//#define MRATE 0.01						/* 突然変異の確立 */
+//#define SEED 32767						/* 乱数のシード */
+//#define YES 1							/* yesに対応する整数値 */
+//#define NO 0							/* noに対応する整数値 */
+//
+//
+///* 関数のプロトタイプの宣言 */
+//void initparcel();													/* 荷物の初期化 */
+//int evalfit(int gene[]);											/* 適応度の計算 */
+//void mating(int pool[POOLSIZE][N], int ngpool[POOLSIZE * 2][N]);	/* 交叉 */
+//void mutation(int ngpool[POOLSIZE * 2][N]);							/* 突然変異 */
+//void printp(int pool[POOLSIZE][N]);									/* 結果出力 */
+//void initpool(int pool[POOLSIZE][N]);								/* 初期集団の生成 */
+//int rndn();															/* n未満乱数の生成 */
+//int notval(int v);													/* 真理値の反転 */
+//int selectp(int roulette[POOLSIZE], int totalfitness);				/* 親の選択 */
+//void crossing(int m[], int p[], int cl[], int c2[]);				/* 特定の2染色体の交叉 */
+//void selectng(int ngpool[POOLSIZE * 2][N], int pool[POOLSIZE][N]);  /* 次世代の選択 */
+//
+///* 大域変数(荷物データ) */
+//int parcel[N][2];	/* 荷物 */
+//
+///******************/
+///*   main()関数   */
+///******************/
+//
+//int main(int argc,char argv[])
+//{
+//	int pool[POOLSIZE][N];			/* 染色体プール */
+//	int ngpool[POOLSIZE * 2][N];	/* 次世代染色体プール */
+//	int generation;					/* 現在の世代数 */
 //
 //	/* 乱数の初期化 */
 //	srand(SEED);
 //
-//	/* 最適化の本体 */
-//	for (i = 0; i < ILIMIT; i++)
+//	/* 荷物の初期化 */
+//	initparcel();
+//
+//	/* 初期集団の生成 */
+//	initpool(pool);
+//
+//	/* 打ち切り世代まで繰り返し */
+//	for (generation = 0; generation < LASTG; generation++)
 //	{
-//		/* フェロモンの状態出力 */
-//		printf("%d:\n", i);
-//		printp(pheromone);
-//		/* 蟻を歩かせる */
-//		walk(cost, pheromone, mstep);
-//		/* フェロモンの更新 */
-//		update(cost, pheromone, mstep);
+//		printf("%d世代\n", generation);
+//		mating(pool, ngpool);		/* 交叉 */
+//		mutation(ngpool);			/* 突然変異 */
+//		selectng(ngpool, pool);		/* 次世代の選択 */
+//		printp(pool);				/* 結果出力 */
 //	}
-//	/* フェロモンの状態出力 */
-//	printf("%d:\n", i);
-//	printp(pheromone);
+//
 //	return 0;
 //}
 //
 ///**************************************************/
-///*               update()関数                     */
-///*               フェロモンの更新                 */
+///*               initparcel()関数                 */
+///*               荷物の初期化                     */
 ///**************************************************/
 //
-//void update(int cost[2][STEP], double pheromone[2][STEP], int mstep[NOA][STEP])
+//void initparcel()
 //{
-//	int m;	/* 蟻の個体番号 */
-//	int lm;	/* 蟻の歩いた距離 */
-//	int i, j;
-//	double sum_lm = 0;	/* 蟻の歩いた合計距離 */
-//
-//	/* フェロモンの蒸発 */
-//	for (i = 0; i < 2; i++)
-//		for (j = 0; j < STEP; j++)
-//			pheromone[i][j] *= RHO;
-//
-//
-//	/* 蟻による上塗り */
-//	for (m = 0; m < NOA; m++)
+//	int i = 0;
+//	while ((i < N) && (scanf("%d %d", &parcel[i][0], &parcel[i][1]) != EOF))
 //	{
-//		/* 個体mの移動距離lmの計算 */
-//		lm = 0;
-//		for (i = 0; i < STEP; i++)
-//			lm += cost[mstep[m][i]][i];
-//
-//		/* フェロモンの上塗り */
-//		for (i = 0; i < STEP; i++)
-//			pheromone[mstep[m][i]][i] += Q * (1.0 / lm);
-//		sum_lm += lm;
+//		i++;
 //	}
-//	/* 蟻の歩いた平均距離を出力 */
-//	printf("%1f\n", sum_lm / NOA);
-//
 //}
 //
 ///**************************************************/
-///*                walk()関数                      */
-///*                蟻を歩かせる                    */
+///*                  selectng()関数                */
+///*                  次世代の選択                  */
 ///**************************************************/
 //
-//void walk(int cost[2][STEP], double pheromone[2][STEP], int mstep[NOA][STEP])
+//void selectng(int ngpool[POOLSIZE * 2][N], int pool[POOLSIZE][N])
 //{
-//	int m;	/* 蟻の個体番号 */
-//	int s;	/* 蟻の現在ステップ位置 */
-//	for (m = 0; m < NOA; m++)
+//	int i, j, c;					/* 繰り返しの制御変数 */
+//	int totalfitness = 0;			/* 適応度の合計 */
+//	int roulette[POOLSIZE * 2];		/* 適応度を格納 */
+//	int ball;						/* 弾(選択位置の数値) */
+//	int acc = 0;					/* 適応度の積算値 */
+//
+//	/* 選択を繰り返す */
+//	for (i = 0; i < POOLSIZE; i++)
 //	{
-//		for (s = 0; s < STEP; s++)
+//		/* ルーレットの作成 */
+//		totalfitness = 0;
+//		for (c = 0; c < POOLSIZE * 2; c++)
 //		{
-//			/* greedy法による行動選択 */
-//			if ((rand1() < EPSILON) || (abs(pheromone[0][s] - pheromone[1][s]) < 1e-9))
-//			{
-//				/* ランダムに行動 */
-//				mstep[m][s] = rand01();
-//			}
-//			else
-//			{
-//				/* フェロモン濃度により選択 */
-//				if (pheromone[0][s] > pheromone[1][s])
-//					mstep[m][s] = 0;
-//				else
-//					mstep[m][s] = 1;
-//			}
+//			roulette[c] = evalfit(ngpool[c]);
+//			/* 適応度の合計値を計算 */
+//			totalfitness += roulette[c];
+//		}
+//		
+//		/* 染色体を一つ選ぶ */
+//		ball = rndn(totalfitness);
+//		acc = 0;
+//		for (c = 0; c < POOLSIZE * 2; c++)
+//		{
+//			acc += roulette[c];		/* 適応度を積算 */
+//			if (acc > ball) break;	/* 適応する遺伝子 */
+//		}
+//
+//		/* 染色体のコピー */
+//		for (j = 0; j < N; j++)
+//		{
+//			pool[i][j] = ngpool[c][j];
 //		}
 //	}
-//	/* 蟻の挙動の出力 */
-//	printmstep(mstep);
 //}
 //
 ///**************************************************/
-///*            printmstep()関数                    */
-///*            蟻の挙動の表示                      */
+///*            selectp()関数                       */
+///*            親の選択                            */
 ///**************************************************/
 //
-//void printmstep(int mstep[NOA][STEP])
+//int selectp(int roulette[POOLSIZE], int totalfitness)
 //{
-//	int i, j;
+//	int i;			/* 繰り返しの制御変数 */
+//	int ball;		/* 弾(選択位置の数値) */
+//	int acc = 0;	/* 適応度の積算値 */
 //
-//	printf("mstep\n");
-//	for (i = 0; i < NOA; i++)
+//	ball = rndn(totalfitness);
+//	
+//	for (i = 0; i < POOLSIZE; i++)
 //	{
-//		for (j = 0; j < STEP; j++)
-//			printf("%d ", mstep[i][j]);
-//		printf("\n");
+//		acc += roulette[i];		/* 低高度の積算 */
+//		if (acc > ball) break;	/* 対応する遺伝子 */
+//	}
+//	return i;
+//}
+//
+//
+///**************************************************/
+///*             mating()関数                       */
+///*			　 交叉                               */
+///**************************************************/
+//
+//void mating(int pool[POOLSIZE][N], int ngpool[POOLSIZE * 2][N])
+//{
+//	int i;					/* 繰り返しの制御変数 */	
+//	int totalfitness = 0;	/* 適応度の合計値 */
+//	int roulette[POOLSIZE]; /* 適応度の格納 */
+//	int mama, papa;			/* 親の遺伝子の番号 */
+//
+//	/* ルーレットの作成 */
+//	for (i = 0; i < POOLSIZE; i++)
+//	{
+//		roulette[i] = evalfit(pool[i]);
+//		/* 適応度の合計値を計算 */
+//		totalfitness += roulette[i];
+//	}
+//
+//	/* 選択と交叉を繰り返す */
+//	for (i = 0; i < POOLSIZE; i++)
+//	{
+//		do
+//		{
+//			/* 親の選択 */
+//			mama = selectp(roulette, totalfitness);
+//			papa = selectp(roulette, totalfitness);
+//		}while (mama = papa); /* 重複の削除 */
+//
+//		/* 特定の2染色体の交叉 */
+//		crossing(pool[mama], pool[papa], ngpool[i * 2], ngpool[i * 2 + 1]);
+//	}
+//
+//}
+//
+///**************************************************/
+///*            crossing1()関数                     */
+///*            特定の二染色体の交叉                */
+///**************************************************/
+//
+//void crossing(int m[], int p[],int c1[], int c2[])
+//{
+//	int j;		/* 繰り返しの制御変数 */
+//	int cp;		/* 交差する点 */
+//
+//	/* 交叉点の決定 */
+//	cp = rndn(N);
+//
+//	/* 前半部分のコピー */
+//	for (j = 0; j < cp; j++)
+//	{
+//		c1[j] = m[j];
+//		c2[j] = p[j];
+//	}
+//
+//	/* 後半部分のコピー */
+//	for (; j < N; j++)
+//	{
+//		c2[j] = m[j];
+//		c1[j] = p[j];
 //	}
 //}
 //
+///**************************************************/
+///*             evalfit()関数                      */
+///*             適応度の計算                       */
+///**************************************************/
+//
+//int evalfit(int g[])
+//{
+//	int pos;		/* 遺伝子座の指定 */
+//	int value = 0;  /* 評価値 */
+//	int weight = 0; /* 重量 */
+//
+//	/* 各遺伝子座を調べて重量と評価値を計算 */
+//	for (pos = 0; pos < N; pos++)
+//	{
+//		weight += parcel[pos][0] * g[pos];
+//		value += parcel[pos][1] * g[pos];
+//	}
+//
+//	/* 致死遺伝子の処理 */
+//	if (weight >= WEIGHTLIMIT) value = 0;
+//	return value;
+//}
 //
 ///**************************************************/
 ///*             printp()関数                       */
-///*			　 フェロモンの表示                   */
+///*             結果出力                           */
 ///**************************************************/
 //
-//void printp(double pheromone[2][STEP])
+//void printp(int pool[POOLSIZE][N])
 //{
-//	int i, j;
-//	for (i = 0; i < 2; i++)
+//	int i, j;					/* 繰り返しの制御変数 */
+//	int fitness;				/* 適応度 */
+//	double totalfitness = 0;	/* 適応度の合計値 */
+//	int elite, bestfit = 0;		/* エリート遺伝子の処理用変数 */
+//
+//	for (i = 0; i < POOLSIZE; i++)
 //	{
-//		for (j = 0; j < STEP; j++)
-//			printf("%4.2lf ", pheromone[i][j]);
-//		printf("\n");
+//		for (j = 0; j < N; j++)
+//			printf("%1d", pool[i][j]);
+//		fitness = evalfit(pool[i]);
+//		printf("\t%d\n", fitness);
+//		if (fitness > bestfit)
+//		{
+//			/* エリート解 */
+//			bestfit = fitness;
+//			elite = i;
+//		}
+//		totalfitness += fitness;
 //	}
+//	/* エリート解の適応度を出力 */
+//	printf("%d\t%d \t", elite, bestfit);
+//	/* 平均の適応度を出力 */
+//	printf("%1f\n", totalfitness / POOLSIZE);
 //}
 //
 ///**************************************************/
-///*            rand01()関数                        */
-///*            0～1の実数を返す乱数関数            */
+///*             initpool()関数                     */
+///*             初期集団の生成                     */
 ///**************************************************/
 //
-//double rand1()
+//void initpool(int pool[POOLSIZE][N])
 //{
-//	/* 乱数の計算 */
-//	return (double)rand() / RAND_MAX;
+//	int i, j;  /* 繰り返しの制御変数 */
+//	for (i = 0; i < POOLSIZE; i++)
+//		for (j = 0; j < N; j++)
+//			pool[i][j] = rndn(2);
 //}
 //
 ///**************************************************/
-///*             rand01()関数                       */
-///*             0または1を返す乱数関数             */
+///*             rndn()関数                         */
+///*             n未満の乱数の生成　　　　　　　　　*/
 ///**************************************************/
 //
-//int rand01()
+//int rndn(int l)
 //{
-//	int rnd;
+//	int rndno;	/* 生成した乱数 */
+//	
+//	while ((rndno = ((double)rand() / RAND_MAX) * l) == l);
 //
-//	/* 乱数の最大値を除く */
-//	while ((rnd = rand()) == RAND_MAX);
-//	/* 単数の計算 */
-//	return (int)((double)rnd / RAND_MAX * 2);
+//	return rndno;
+//}
+//
+///**************************************************/
+///*             mutation()関数                     */
+///*             突然変異　         　　　　　　　　*/
+///**************************************************/
+//
+//void mutation(int ngpool[POOLSIZE * 2][N])
+//{
+//	int i, j;		/* 繰り返しの制御変数 */
+//
+//	for (i = 0; i < POOLSIZE * 2; i++)
+//		for (j = 0; j < N; j++)
+//			if ((double)rndn(100) / 100.0 <= MRATE)
+//				/* 反転の突然変異 */
+//				ngpool[i][j] = notval(ngpool[i][j]);
+//}
+//
+///**************************************************/
+///*             notval()関数                       */
+///*             真理値の反転       　　　　　　　　*/
+///**************************************************/
+//
+//
+//int notval(int v)
+//{
+//	if (v == YES) return NO;
+//	else return YES;
 //}
