@@ -128,8 +128,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="aco.c" />
+    <ClCompile Include="bp1.c" />
+    <ClCompile Include="cp.c" />
     <ClCompile Include="kpga.c" />
     <ClCompile Include="neuron.c" />
+    <ClCompile Include="nn.c" />
     <ClCompile Include="qlearning.c" />
     <ClCompile Include="sum2.c" />
   </ItemGroup>
