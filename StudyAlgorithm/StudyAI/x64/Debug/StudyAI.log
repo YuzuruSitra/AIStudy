@@ -1,0 +1,5 @@
+﻿  cp.c
+  learnstock.c
+E:\gitFork\AIStudy\StudyAI\learnstock.c(149,32): warning C4244: 'return': 'double' から 'int' への変換です。データが失われる可能性があります。
+  コードを生成中...
+  StudyAI.vcxproj -> E:\gitFork\AIStudy\x64\Debug\StudyAI.exe
